@@ -1697,18 +1697,78 @@ class VideoCompose(BaseTool):
         # Absolutise so the CLI can resolve the output regardless of cwd.
         output_path = output_path.resolve()
 
+        # remotion-composer lives at project root
+        composer_dir = Path(__file__).resolve().parent.parent.parent / "remotion-composer"
+        if not composer_dir.exists():
+            return ToolResult(
+                success=False,
+                error=f"Remotion composer project not found at {composer_dir}",
+            )
+
         # Deep-copy props so we don't mutate the original
         props = json.loads(json.dumps(composition_data))
 
-        # Convert absolute file paths to file:// URIs for Remotion's
-        # Img and OffthreadVideo components
+        # Local AUDIO (and video) assets must be staged into a subfolder of
+        # remotion-composer/public/ and referenced by a plain relative
+        # filename resolved via staticFile(). Remotion's asset-download step
+        # — used to mix <Audio>/<Video>/<OffthreadVideo> into the final
+        # render — only accepts http(s):// or data: URIs; a file:// URI or
+        # bare absolute path always fails with "Can only download URLs
+        # starting with http:// or https://". Images are unaffected: <Img>
+        # is painted directly by Chromium during frame capture and never
+        # goes through that server-side download step, so the file://
+        # conversion below still works fine for them. Staging inside the
+        # existing public/ dir (rather than overriding --public-dir) keeps
+        # every other default public asset resolvable.
+        import uuid as _uuid
+
+        VIDEO_EXTS = (".mp4", ".mov", ".webm", ".avi", ".mkv")
+        staging_dir = composer_dir / "public" / f".render_tmp_{_uuid.uuid4().hex[:8]}"
+        staged_assets: dict[str, str] = {}
+
+        def _stage_local_asset(path_str: str) -> str | None:
+            if not path_str or path_str.startswith(("http://", "https://", "data:")):
+                return None
+            clean = path_str
+            if clean.startswith("file:///"):
+                clean = clean[len("file:///"):]
+            elif clean.startswith("file://"):
+                clean = clean[len("file://"):]
+            resolved = Path(clean).resolve()
+            if not resolved.exists():
+                return None
+            key = str(resolved)
+            if key not in staged_assets:
+                staging_dir.mkdir(parents=True, exist_ok=True)
+                staged_name = f"{len(staged_assets)}_{resolved.name}"
+                shutil.copy2(resolved, staging_dir / staged_name)
+                staged_assets[key] = f"{staging_dir.name}/{staged_name}"
+            return staged_assets[key]
+
+        # Convert absolute file paths to file:// URIs for Remotion's Img
+        # component. Local video sources are staged instead (see above).
         for cut in props.get("cuts", []):
             source = cut.get("source", "")
-            if source and not source.startswith(("http://", "https://", "file://")):
+            if not source:
+                continue
+            if source.lower().split("?")[0].endswith(VIDEO_EXTS):
+                staged = _stage_local_asset(source)
+                if staged:
+                    cut["source"] = staged
+                    continue
+            if not source.startswith(("http://", "https://", "file://")):
                 resolved = Path(source).resolve()
                 if resolved.exists():
                     posix = resolved.as_posix()
                     cut["source"] = f"file:///{posix}" if not posix.startswith("/") else f"file://{posix}"
+
+        audio_cfg = props.get("audio") or {}
+        for layer_key in ("narration", "music"):
+            layer = audio_cfg.get(layer_key)
+            if isinstance(layer, dict) and layer.get("src"):
+                staged = _stage_local_asset(layer["src"])
+                if staged:
+                    layer["src"] = staged
 
         # Build a custom themeConfig from the playbook's actual colors.
         # This ensures every video gets a unique visual identity derived
@@ -1727,14 +1787,6 @@ class VideoCompose(BaseTool):
         props_path = output_path.parent / ".remotion_props.json"
         with open(props_path, "w", encoding="utf-8") as f:
             json.dump(props, f)
-
-        # remotion-composer lives at project root
-        composer_dir = Path(__file__).resolve().parent.parent.parent / "remotion-composer"
-        if not composer_dir.exists():
-            return ToolResult(
-                success=False,
-                error=f"Remotion composer project not found at {composer_dir}",
-            )
 
         # Route to the correct Remotion composition based on renderer_family.
         # This prevents all pipelines from collapsing into the Explainer visual grammar.
@@ -1808,6 +1860,8 @@ class VideoCompose(BaseTool):
         finally:
             if props_path.exists():
                 props_path.unlink()
+            if staging_dir.exists():
+                shutil.rmtree(staging_dir, ignore_errors=True)
 
         if not output_path.exists():
             return ToolResult(

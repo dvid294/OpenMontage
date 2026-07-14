@@ -109,9 +109,56 @@ exports/
       concept.json          # Thumbnail concept (or the copied thumbnail image)
 ```
 
-`export_bundle` is a local, offline packager — it does not upload. A networked
-publisher (e.g. a YouTube uploader) would be a separate `publish`-capability
-provider.
+`export_bundle` is a local, offline packager — it does not upload.
+
+### Step 5b: Upload to YouTube (optional, networked)
+
+`youtube_upload` is the networked `publish`-capability provider anticipated
+above. Check `registry.get_by_capability("publish")` — if `youtube_upload` is
+`AVAILABLE` (i.e. `YOUTUBE_CLIENT_SECRET_FILE` is configured), offer the user a
+direct upload in addition to (not instead of) the local export bundle.
+
+**This is a real, consequential publish action — always confirm with the user
+before calling it, and never call it with `privacy_status="public"` unless the
+user explicitly asked for an immediate public release.** Default to
+`privacy_status="private"` (or `"unlisted"` if the user wants a shareable link
+without listing it publicly) and let the user flip it to public themselves,
+or pass `publish_at` for a scheduled release.
+
+```python
+result = youtube_upload.execute({
+    "video_path": render_report["outputs"][0]["path"],
+    "title": proposal_packet["selected_concept"]["title"],
+    "description": seo_description,      # same description prepared for export_bundle
+    "tags": seo_tags,
+    "category_id": "27",                  # Education — use 28 for Science & Technology
+    "privacy_status": "private",          # never default to "public"
+    "thumbnail_path": thumbnail_path,      # optional
+})
+```
+
+On first call this opens a browser for one-time OAuth consent (the user
+authorizes their own channel); later calls reuse the cached token silently.
+On success, fold the result into a **second** `publish_log` entry (in addition
+to the `export_bundle` entry, not replacing it) — `platform: "youtube"`,
+`status: "published"`, `url`/`video_id` from the tool's output,
+`visibility` from `privacy_status`:
+
+```json
+{
+  "platform": "youtube",
+  "status": "published",
+  "url": "https://youtu.be/VIDEO_ID",
+  "video_id": "VIDEO_ID",
+  "visibility": "private",
+  "timestamp": "2026-01-15T10:31:00+00:00",
+  "metadata_used": { "title": "...", "description": "...", "hashtags": [...], "chapters": [...] }
+}
+```
+
+If the upload fails (quota, auth, network), set `status: "failed"` and put the
+tool's error message in `error` — do not silently drop the entry or retry
+without telling the user.
 
 ### Step 6: Build Publish Log
 

@@ -52,29 +52,61 @@ The Research Director has already done the heavy lifting — you have a `researc
 
 ### Step 3: Plan the Narrative Arc
 
-Before writing prose, plan the structure. Every explainer script follows a dramatic arc:
+Before writing prose, plan the structure. Every explainer script follows a dramatic arc — and every arc must be built for retention, not just correctness. Viewers decide whether to keep watching in the first few seconds, then keep re-deciding roughly every 20-30 seconds after that.
 
 ```
-HOOK (0-5s)     → Grab attention. Question, bold claim, or surprising fact.
+HOOK (0-5s, hard ceiling 8s) → Grab attention immediately. Use ONE of:
+                   - a shock number / statistic ("73% of X never Y")
+                   - a counterintuitive or contrarian claim ("X is quietly working against you")
+                   - a direct question aimed at the viewer ("What if everything you knew about X was backwards?")
                    NEVER: "In this video, we'll learn about..."
                    NEVER: "Hey guys, welcome back..."
+                   NEVER a scene-setting or throat-clearing intro before the hook lands —
+                   the first line IS the hook, not a runway to it.
 
-SETUP (5-15s)   → Why should the viewer care? Create a knowledge gap.
-                   Show the problem or the question. Make them NEED the answer.
+OPEN LOOP (by ~8-10s) → Immediately after the hook, plant a CONCRETE, SPECIFIC promise the
+                   video will pay off later — not vague curiosity. "By the end of this you'll
+                   know exactly what this is costing you" beats "let's find out what's really
+                   going on." Write the open loop and the CLIMAX as a matched pair — the
+                   climax must resolve THIS specific promise, not a generic one.
+
+SETUP (5/8-15s)   → Why should the viewer care? Reinforce the knowledge gap the open loop
+                   just created. Show the problem or the question. Make them NEED the answer.
 
 BUILD (15-Xs)   → Progressive revelation. Each section builds on the last.
                    Use "therefore / but" transitions, NOT "and then."
                    South Park rule: "This happened, THEREFORE that happened,
                    BUT then this complication arose..."
+                   PATTERN INTERRUPT every 20-30 seconds: a tonal shift, a rhetorical
+                   question to the viewer, a sharp pivot, or a stat dropped cold.
+                   Attention resets on interrupt, not on inertia — a BUILD stretch longer
+                   than ~30s without one is a drop-off risk. Mark these beats explicitly
+                   (their own short section, or called out in speaker_directions) so the
+                   Scene Planner can match a visual/pacing shift to each one.
 
 CLIMAX (X-5s before end) → The "aha" moment. Everything clicks into place.
-                            This is the payoff for the setup's knowledge gap.
+                            This must resolve the OPEN LOOP's specific promise, not a
+                            generic version of it.
 
-LANDING (last 5s) → Quick recap of core message + CTA.
-                     Don't introduce new information here.
+LANDING (last 5s) → Quick recap of core message + CTA + a CALLBACK that closes the loop
+                     using the hook's exact wording or image ("Remember that 73%? ...").
+                     The callback is what makes the video feel deliberately finished, not
+                     just stopped. Don't introduce new information here.
 ```
 
 Map each of the brief's `key_points` to a specific section in the BUILD phase.
+
+**Sentence rhythm**: vary sentence length on purpose. A run of same-length sentences reads as a monotone drone even with strong TTS delivery. Alternate short punchy fragments ("It doesn't.") with longer explanatory sentences. Read the BUILD section aloud — if every sentence lands at 12-18 words, break the pattern.
+
+### Niche-Specific Framing
+
+Some verticals respond better to a specific psychological frame than to neutral information delivery. Check the brief's topic/niche and apply where it genuinely fits:
+
+| Niche | Frame | Instead of | Use |
+|-------|-------|-----------|-----|
+| Finance / money / investing | Loss aversion — what NOT knowing this costs you | "Here's how compound interest works." | "Here's what not understanding this is quietly costing you every single month." |
+
+Loss aversion outperforms neutral information delivery for finance content because viewers are more motivated to avoid a concrete loss than to chase an equivalent gain. Frame key stats as the cost of inaction wherever the data honestly supports it — don't manufacture a loss that isn't real; an invented cost undermines the "traceable to research_brief" rule below.
 
 ### Step 4: Write the Script
 
@@ -193,13 +225,18 @@ Score your script (1-5):
 
 | Criterion | Question |
 |-----------|----------|
-| **Hook power** | Would someone stop scrolling in the first 3 seconds? |
+| **Hook power** | Would someone stop scrolling in the first 3 seconds? Is it a shock stat, counterintuitive claim, or direct question — not a slow intro? |
+| **Open loop** | Is there a concrete, specific promise planted by ~8-10s, distinct from vague curiosity? |
 | **Word count accuracy** | Within ±10% of target for the duration? |
 | **Narrative flow** | Does each section build on the last? "Therefore/but" not "and then"? |
+| **Pattern interrupt cadence** | Is there a tonal shift, question, or stat drop at least every 20-30s in the BUILD phase? |
+| **Sentence rhythm** | Is sentence length varied, or does everything land at the same word count? |
 | **Enhancement density** | At least one cue every 8-10 seconds? |
 | **Voice performance** | Are pauses, emphasis, pace, and sample section explicit? |
 | **Jargon management** | Technical terms explained or have pronunciation guides? |
-| **Climax payoff** | Does the aha moment deliver on the hook's promise? |
+| **Climax payoff** | Does the aha moment resolve the OPEN LOOP's specific promise? |
+| **Hook callback** | Does the LANDING explicitly reference the hook's wording or image? |
+| **Niche framing** | For finance/money topics: is the cost-of-inaction (loss aversion) frame used where the data supports it? |
 | **CTA relevance** | Is the call to action specific and actionable? |
 
 If any dimension scores below 3, revise before submitting.

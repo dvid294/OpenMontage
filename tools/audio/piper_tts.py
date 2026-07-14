@@ -38,8 +38,10 @@ class PiperTTS(BaseTool):
         "Install Piper TTS:\n"
         "  pip install piper-tts\n"
         "Or download from https://github.com/rhasspy/piper/releases\n"
-        "Then download a voice model:\n"
-        "  piper --download-dir ~/.piper/models --model en_US-lessac-medium"
+        "Then download the default voice model (male, medium quality):\n"
+        "  https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_male/medium/en_US-hfc_male-medium.onnx\n"
+        "  https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/hfc_male/medium/en_US-hfc_male-medium.onnx.json\n"
+        "Place both files in the project root (or pass an absolute 'model' path)."
     )
     agent_skills = ["text-to-speech"]
 
@@ -69,7 +71,8 @@ class PiperTTS(BaseTool):
             "text": {"type": "string"},
             "model": {
                 "type": "string",
-                "default": "en_US-lessac-medium",
+                "default": "en_US-hfc_male-medium.onnx",
+                "description": "Path to a Piper .onnx voice model file.",
             },
             "speaker_id": {
                 "type": "integer",
@@ -123,7 +126,7 @@ class PiperTTS(BaseTool):
         proc = subprocess.run(
             [
                 "piper",
-                "--model", inputs.get("model", "en_US-lessac-medium"),
+                "--model", inputs.get("model", "en_US-hfc_male-medium.onnx"),
                 "--speaker", str(inputs.get("speaker_id", 0)),
                 "--length-scale", str(inputs.get("length_scale", 1.0)),
                 "--sentence-silence", str(inputs.get("sentence_silence", 0.3)),
@@ -144,12 +147,12 @@ class PiperTTS(BaseTool):
             success=True,
             data={
                 "provider": self.provider,
-                "model": inputs.get("model", "en_US-lessac-medium"),
+                "model": inputs.get("model", "en_US-hfc_male-medium.onnx"),
                 "speaker_id": inputs.get("speaker_id", 0),
                 "text_length": len(inputs["text"]),
                 "output": str(output_path),
                 "format": "wav",
             },
             artifacts=[str(output_path)],
-            model=inputs.get("model", "en_US-lessac-medium"),
+            model=inputs.get("model", "en_US-hfc_male-medium.onnx"),
         )
