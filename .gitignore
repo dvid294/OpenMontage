@@ -48,6 +48,8 @@ gcp-*.json
 *-service-account.json
 service-account*.json
 service_account*.json
+# Google OAuth "Desktop app" client JSON — Cloud Console's default download name
+client_secret*.json
 
 # Stray media downloads (test/scratch clips left in repo root)
 pexels_video_*.mp4
