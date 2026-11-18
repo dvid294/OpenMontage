@@ -89,6 +89,14 @@ def main(spec_path, out):
                   f"borderw=3:bordercolor=black:enable='gte(t,{starts[i]:.2f})'")
         dt.append(f"drawtext=fontfile={FONT}:text='#{rank}':fontcolor={col}:fontsize=150:x=w-tw-40:y={TOP+30}:"
                   f"borderw=8:bordercolor=black:enable='between(t,{starts[i]:.2f},{starts[i]+1.6:.2f})'")
+        if it.get("sub"):
+            end = starts[i + 1] if i + 1 < n else total
+            dt.append(f"drawtext=fontfile={FONT}:text='{esc(it['sub'])}':fontcolor=white:fontsize=64:"
+                      f"x=(w-tw)/2:y=h-230:box=1:boxcolor=black@0.6:boxborderw=18:"
+                      f"enable='between(t,{starts[i]+0.4:.2f},{end:.2f})'")
+    if spec.get("credit"):
+        dt.append(f"drawtext=fontfile={FONT}:text='{esc(spec['credit'])}':fontcolor=white@0.85:fontsize=34:"
+                  f"x=40:y={TOP+20}:borderw=3:bordercolor=black")
     if spec.get("hook"):
         dt.append(f"drawtext=fontfile={FONT}:text='{esc(spec['hook'])}':fontcolor=0xFFD400:fontsize=70:"
                   f"x=(w-tw)/2:y=h*0.72:borderw=6:bordercolor=black:enable='lt(t,2.2)'")
