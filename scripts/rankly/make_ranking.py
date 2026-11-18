@@ -18,7 +18,7 @@ clip plays, clip below, short voice line per item, clip audio ducked under voice
 """
 import asyncio, json, os, subprocess, sys, tempfile
 
-FONT = "/usr/share/fonts/opentype/inter/InterDisplay-Bold.otf"
+FONT = os.environ.get("RANKLY_FONT", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")
 VOICE = "en-US-GuyNeural"
 W, H, TOP = 1080, 1920, 600
 COLORS = ["0xFFD400", "0xC0C0C0", "0xCD7F32", "white", "white"]  # #1..#5
@@ -29,9 +29,10 @@ def run(cmd):
 
 
 def dur(path):
-    out = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration",
-                                   "-of", "csv=p=0", path])
-    return float(out)
+    import re  # ffmpeg-only (no ffprobe in the workbench)
+    r = subprocess.run(["ffmpeg", "-i", path], capture_output=True, text=True)
+    h, m, s = re.search(r"Duration: (\d+):(\d+):([\d.]+)", r.stderr).groups()
+    return int(h) * 3600 + int(m) * 60 + float(s)
 
 
 async def tts(text, path):
@@ -77,7 +78,7 @@ def main(spec_path, out):
     run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", cat])
 
     # overlay: title, numbered list (labels reveal when their clip starts), current-rank badge, hook, outro
-    dt = [f"drawtext=fontfile={FONT}:text='{esc(spec['title'])}':fontcolor=white:fontsize=58:"
+    dt = [f"drawtext=fontfile={FONT}:text='{esc(spec['title'])}':fontcolor=white:fontsize={min(58,int(1000/(0.68*len(spec['title']))))}:"
           f"x=(w-tw)/2:y=40:borderw=4:bordercolor=black"]
     for i, it in enumerate(items):
         rank = n - i
@@ -85,7 +86,7 @@ def main(spec_path, out):
         col = COLORS[rank - 1]
         dt.append(f"drawtext=fontfile={FONT}:text='{rank}.':fontcolor={col}:fontsize=60:x=60:y={y}:"
                   f"borderw=3:bordercolor=black")
-        dt.append(f"drawtext=fontfile={FONT}:text='{esc(it['label'])}':fontcolor={col}:fontsize=54:x=150:y={y+4}:"
+        dt.append(f"drawtext=fontfile={FONT}:text='{esc(it['label'])}':fontcolor={col}:fontsize={min(54,int(880/(0.66*len(it['label']))))}:x=150:y={y+4}:"
                   f"borderw=3:bordercolor=black:enable='gte(t,{starts[i]:.2f})'")
         dt.append(f"drawtext=fontfile={FONT}:text='#{rank}':fontcolor={col}:fontsize=150:x=w-tw-40:y={TOP+30}:"
                   f"borderw=8:bordercolor=black:enable='between(t,{starts[i]:.2f},{starts[i]+1.6:.2f})'")
@@ -98,13 +99,13 @@ def main(spec_path, out):
         dt.append(f"drawtext=fontfile={FONT}:text='{esc(spec['credit'])}':fontcolor=white@0.85:fontsize=34:"
                   f"x=40:y={TOP+20}:borderw=3:bordercolor=black")
     if spec.get("hook"):
-        dt.append(f"drawtext=fontfile={FONT}:text='{esc(spec['hook'])}':fontcolor=0xFFD400:fontsize=70:"
+        dt.append(f"drawtext=fontfile={FONT}:text='{esc(spec['hook'])}':fontcolor=0xFFD400:fontsize={min(70,int(1000/(0.68*len(spec['hook']))))}:"
                   f"x=(w-tw)/2:y=h*0.72:borderw=6:bordercolor=black:enable='lt(t,2.2)'")
     if spec.get("outro"):
         dt.append(f"drawtext=fontfile={FONT}:text='{esc(spec['outro'])}':fontcolor=white:fontsize=56:"
                   f"x=(w-tw)/2:y=h*0.80:borderw=6:bordercolor=black:box=1:boxcolor=0xE00000@0.85:boxborderw=20:"
                   f"enable='gte(t,{total-2.5:.2f})'")
-    run(["ffmpeg", "-y", "-i", cat, "-vf", ",".join(dt), "-c:v", "libx264", "-preset", "medium",
+    run(["ffmpeg", "-y", "-i", cat, "-vf", ",".join(dt), "-c:v", "libx264", "-preset", "veryfast",
          "-crf", "19", "-c:a", "copy", "-movflags", "+faststart", out])
     print(f"done {out} {total:.1f}s")
 
